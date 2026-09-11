@@ -4,10 +4,11 @@ A synthetic bank loan portfolio, an IFRS 9-style expected credit loss (ECL) mode
 from scratch in Python, and a data-assurance/model-review layer that tests the model
 the way an auditor would.
 
-**Live dashboard:** *(link added once deployed to Streamlit Community Cloud — see
-Section "How to run it locally" below to run it yourself in the meantime)*
+**Live dashboard: [assurebcm.streamlit.app](https://assurebcm.streamlit.app/)**
 
-**Screenshot:** *(added once the dashboard is deployed)*
+**Screenshot:** *(add a screenshot of the dashboard here — I don't have browser
+access in this environment to capture one myself; a screenshot of the Portfolio
+Overview tab works well)*
 
 ---
 
