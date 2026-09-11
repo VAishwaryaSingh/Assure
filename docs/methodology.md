@@ -195,3 +195,48 @@ Saved to `data/ecl_results.parquet` (the Phase 2 portfolio fields, plus `ifrs9_s
 and `ecl` per loan) — another output file not in the original plan.md layout, added
 for the same reason as `amortisation_schedules.parquet`: it's the concrete,
 inspectable result this phase actually produces.
+
+---
+
+## Phase 5 — Scenario engine (`model/scenarios.py`)
+
+**Mechanism.** Re-runs the exact same Phase 4 calculation three times, with every risk
+grade's PD scaled up by a fixed multiplier — a worse economy is modelled as a higher
+chance of default, nothing else changes. `ifrs9_stage` does **not** change across
+scenarios: which stage a loan sits in is a fact about its actual payment history
+(`arrears_days`), not a macro assumption, in this simplified model — only the loss
+number moves.
+
+**PD multipliers — base 1.0x / adverse 1.5x / severe 2.5x.** Taken directly from
+plan.md Section 5's own example values.
+
+**Scenario probabilities — base 60% / adverse 30% / severe 10%.** This project's own
+assumption, not a calibrated economic forecast: base-case-most-likely weighting is a
+common convention in multi-scenario IFRS 9 ECL reporting. Disclosed here rather than
+presented as if derived from real economic modelling.
+
+**Probability-weighted ECL** = Σ(scenario ECL x scenario probability) across all
+three — the single blended figure a bank would actually report, rather than picking
+one scenario in isolation.
+
+**Result, same reporting date and portfolio as Phase 4:**
+
+| Scenario | PD multiplier | Probability | Total ECL | Coverage |
+|---|---|---|---|---|
+| Base | 1.0x | 60% | £2.04m | 3.11% |
+| Adverse | 1.5x | 30% | £2.69m | 4.10% |
+| Severe | 2.5x | 10% | £4.00m | 6.09% |
+| **Probability-weighted** | — | — | **£2.43m** | — |
+
+**Why the uplift isn't a clean 1.5x/2.5x:** Stage 3 loans are unaffected by the PD
+multiplier at all (Phase 4's Stage 3 ECL is `LGD x EAD` directly — there's no PD term
+to scale), so roughly a third of the base ECL is fixed regardless of scenario. The
+remaining Stage 1/2 portion scales close to, but not exactly, the stated multiplier
+because (a) the lifetime ECL survival-curve maths (Phase 4) is non-linear in PD, and
+(b) PD is capped at 100% — the weakest grade (`D`, 40% base PD) hits that cap exactly
+under the severe 2.5x multiplier. Worth being able to explain this out loud rather
+than presenting the scaling as perfectly linear.
+
+Saved to `data/ecl_scenarios.parquet` — all three scenarios' full per-loan results in
+one file (a `scenario` column distinguishes them), for the dashboard's side-by-side
+scenario view in Phase 7.

@@ -37,14 +37,19 @@ def _monthly_hazard(annual_pd: float) -> float:
     return 1 - (1 - annual_pd) ** (1 / 12)
 
 
-def ecl_12_month(portfolio: pd.DataFrame) -> pd.Series:
-    pd_12m = portfolio["borrower_risk_grade"].map(PD_12M_BY_GRADE)
+def ecl_12_month(portfolio: pd.DataFrame, pd_table: dict = PD_12M_BY_GRADE) -> pd.Series:
+    pd_12m = portfolio["borrower_risk_grade"].map(pd_table)
     lgd = portfolio["collateral_type"].map(LGD_BY_COLLATERAL)
     ead = portfolio["current_balance"]
     return pd_12m * lgd * ead
 
 
-def ecl_lifetime(portfolio: pd.DataFrame, schedules: pd.DataFrame, as_of_date) -> pd.Series:
+def ecl_lifetime(
+    portfolio: pd.DataFrame,
+    schedules: pd.DataFrame,
+    as_of_date,
+    pd_table: dict = PD_12M_BY_GRADE,
+) -> pd.Series:
     """Sum of PD_t x LGD x EAD_t over every remaining monthly period."""
     as_of_date = pd.Timestamp(as_of_date)
     future = (
@@ -53,7 +58,7 @@ def ecl_lifetime(portfolio: pd.DataFrame, schedules: pd.DataFrame, as_of_date) -
         .merge(portfolio[["loan_id", "borrower_risk_grade", "collateral_type"]], on="loan_id")
     )
 
-    annual_pd = future["borrower_risk_grade"].map(PD_12M_BY_GRADE)
+    annual_pd = future["borrower_risk_grade"].map(pd_table)
     monthly_hazard = annual_pd.apply(_monthly_hazard)
     months_ahead = future.groupby("loan_id").cumcount()  # 0 = the next period after as_of_date
     survival_prob = (1 - monthly_hazard) ** months_ahead
@@ -73,11 +78,23 @@ def ecl_stage3(portfolio: pd.DataFrame) -> pd.Series:
     return lgd * ead
 
 
-def calculate_ecl(portfolio: pd.DataFrame, schedules: pd.DataFrame, as_of_date) -> pd.DataFrame:
-    """Adds ifrs9_stage and ecl columns, routing each loan to the right formula by stage."""
+def calculate_ecl(
+    portfolio: pd.DataFrame,
+    schedules: pd.DataFrame,
+    as_of_date,
+    pd_table: dict = PD_12M_BY_GRADE,
+) -> pd.DataFrame:
+    """Adds ifrs9_stage and ecl columns, routing each loan to the right formula by stage.
+
+    `pd_table` defaults to the base-case PD_12M_BY_GRADE but can be swapped
+    for a scaled table — see model/scenarios.py — to flex the same
+    calculation under different macro scenarios. Stage assignment always
+    uses arrears_days (a fact about the loan), never the PD table, so which
+    stage a loan sits in doesn't change across scenarios — only its ECL does.
+    """
     df = stage_portfolio(portfolio)
-    ecl_12m = ecl_12_month(df)
-    ecl_life = ecl_lifetime(df, schedules, as_of_date)
+    ecl_12m = ecl_12_month(df, pd_table)
+    ecl_life = ecl_lifetime(df, schedules, as_of_date, pd_table)
     ecl_s3 = ecl_stage3(df)
 
     df["ecl"] = np.select(
