@@ -314,3 +314,31 @@ ECL by only ~±6.4%, not ±10% — for the same reason the Phase 5 scenario upli
 a clean multiple: Stage 3's loss (`LGD x EAD`) has no PD term at all, so roughly a
 third of total ECL doesn't respond to a PD shock, diluting the portfolio-wide effect.
 Output: `assurance/sensitivity_results.json`.
+
+---
+
+## Phase 7 — Dashboard (`app/dashboard.py`)
+
+A single Streamlit app, four tabs, reading only the already-committed output files
+from Phases 4-6 (`ecl_results.parquet`, `ecl_scenarios.parquet`, and the three
+`assurance/*.json`/`.csv` files) — it performs no calculation of its own, only
+aggregation and display, so what it shows is always consistent with the committed
+model outputs.
+
+- **Portfolio Overview** — headline KPIs (loans, exposure, ECL, coverage) and the
+  Stage 1/2/3 breakdown.
+- **Scenarios & Sensitivity** — the base/adverse/severe comparison and
+  probability-weighted ECL from Phase 5, plus the PD/LGD sensitivity chart from
+  Phase 6.
+- **Risk Heatmap** — exposure concentration by industry sector × risk grade.
+- **Data Quality & Assurance** — the Phase 6 checks surfaced directly (9/9 data
+  quality checks, the 25-loan recalculation test, both reconciliations), per
+  plan.md's explicit instruction not to hide the QA away.
+
+**Verified with Streamlit's `AppTest` headless testing API** (`streamlit.testing.v1`)
+rather than a browser, since this environment has no browser available — it actually
+executes the script end-to-end and reports any exception, rather than just checking
+the file parses. Confirmed: runs with no exceptions, all 4 tabs render, all 9 metrics
+compute correctly (matching the Phase 4-6 figures exactly), all 4 tables and 5 charts
+render. Not yet visually confirmed in an actual browser — that's still worth doing
+once deployed (Phase 8) or if a browser becomes available locally.
