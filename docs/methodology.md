@@ -18,9 +18,15 @@ plan calls for), snapshotted as at a fixed **reporting date of 31 Dec 2025**. Ev
 "current" field (`current_balance`, `arrears_days`, `status`) is a position as at
 that date, not "today."
 
-**Origination dates.** Drawn uniformly at random (via `Faker.date_between`) from the
-10 years up to the reporting date, so the book contains a realistic mix of recently
-originated and long-standing loans.
+**Origination dates.** Drawn (via `Faker.date_between`) from up to 10 years before the
+reporting date, so the book contains a realistic mix of recently originated and
+long-standing loans — but bounded per loan by that loan's own term (with a 45-day
+buffer), so every loan is guaranteed to still be active (not yet matured) as of the
+reporting date. *(Correction made during Phase 3: the first version of this generator
+drew origination dates independently of term, which left 556 of 1,500 loans — 37% —
+already fully matured before the reporting date. A "current" loan book shouldn't
+contain loans that already finished, so this was fixed before building the
+amortisation engine on top of it.)*
 
 **Term and maturity.** Term is drawn from a fixed set of common terms (1–30 years),
 weighted toward shorter/medium terms. Maturity date is approximated as
@@ -51,12 +57,10 @@ weighted 35/35/20/10. Loan-to-value (`ltv`) is only generated for `residential` 
 10%–95%) and left null for `unsecured`/`other`, since LTV isn't a meaningful concept
 without collateral.
 
-**Current balance — Phase 2 placeholder.** Calculated as a **straight-line**
-decline from `principal` based on the fraction of the loan's term elapsed by the
-reporting date (bullet loans stay at full principal until maturity, since they don't
-amortise). This is a disclosed simplification: it is *not* the real reducing-balance
-amortisation maths — that's built properly in Phase 3, and `current_balance` will be
-recalculated from the real schedule at that point rather than this approximation.
+**Current balance — originally a Phase 2 placeholder, now superseded.** Phase 2
+initially calculated this as a straight-line decline from `principal`. As documented
+below, Phase 3's amortisation engine has since replaced every value in this column
+with the real, reducing-balance-calculated figure — see the Phase 3 section.
 
 **Arrears and status.** `arrears_days` is drawn from a Poisson distribution whose rate
 increases with weaker risk grade (so worse-graded borrowers are more likely to show
@@ -73,3 +77,50 @@ authored, reasonable assumption for a synthetic dataset — not calibrated to an
 bank's actual portfolio or historical default experience. This is intentional (see
 `plan.md` Section 7, point 1 — "Scope"), and is restated in the Model Validation
 Memo's limitations section rather than hidden.
+
+---
+
+## Phase 3 — Amortisation engine (`model/amortisation.py`)
+
+**Formula.** Standard reducing-balance annuity formula (plan.md Section 6):
+`P = L × [c(1+c)^n] / [(1+c)^n − 1]`, where `L` = principal, `c` = monthly interest
+rate (`annual_rate / 12`), `n` = term in months. This is the same maths a real bank
+or mortgage lender uses to set a level monthly payment.
+
+**Two schedule types**, matching the `amortisation_type` field from Phase 2:
+- `reducing_balance` (85% of the book): one flat monthly payment for the life of the
+  loan; the split between interest and principal repayment shifts every month as the
+  balance falls — more interest early on, more principal later.
+- `bullet` (15% of the book): interest-only every month, with the entire principal
+  repaid in a single lump sum in the final period.
+
+**First payment timing.** The first payment falls exactly one calendar month after
+`origination_date` (using real calendar months via `pandas.DateOffset`, not the
+30-days-per-month shortcut Phase 2's `maturity_date` field uses — a small, disclosed
+inconsistency between the two date fields of at most a few days).
+
+**Final-period exact payoff.** The last period of every schedule forces
+`principal_amount` to equal the exact remaining balance, rather than trusting the
+formula's output — this eliminates the few pence of floating-point rounding drift
+that would otherwise leave a non-zero balance after the "final" payment. Verified: the
+maximum closing balance at the final period, across all 1,500 loans, is exactly £0.00.
+
+**`current_balance` refresh.** Running `model/amortisation.py` recalculates
+`current_balance` in `data/loan_portfolio.parquet` from the real schedule — the
+closing balance at the most recent payment date on/before the 31 Dec 2025 reporting
+date — replacing the Phase 2 straight-line placeholder. Loans originated so recently
+that no payment has fallen due yet correctly show `current_balance == principal`.
+
+**Correction to Phase 2 discovered here:** building the real schedules surfaced that
+556 of 1,500 loans (37%) had already fully matured before the reporting date under
+the original Phase 2 date logic (see the "Origination dates" correction note above) —
+a portfolio snapshot shouldn't include loans that already finished. Fixed at the
+source in Phase 2's generator rather than filtered out afterwards, then both scripts
+were re-run. Post-fix, every loan has a positive `current_balance` (minimum ~£509,
+no loans at £0), and 0 loans are already matured as of the reporting date.
+
+**New output file, not in the original plan.md layout:** `data/amortisation_schedules.parquet`
+(180,084 rows — one per loan per remaining month, ~120 months average). Added because
+Phase 4's lifetime ECL calculation needs each loan's full remaining monthly schedule
+(plan.md Section 6: "summed over remaining amortisation schedule"), not just the
+single current-balance figure.

@@ -53,13 +53,22 @@ def generate_portfolio(n=N_LOANS, seed=SEED, reporting_date=REPORTING_DATE):
 
     loan_id = [f"L{str(i).zfill(6)}" for i in range(1, n + 1)]
 
-    earliest = (reporting_date - pd.Timedelta(days=3650)).date()
-    origination_date = pd.Series(pd.to_datetime([
-        fake.date_between(start_date=earliest, end_date=reporting_date.date())
-        for _ in range(n)
-    ]))
-
     term_months = rng.choice(TERM_MONTHS_CHOICES, size=n, p=TERM_MONTHS_PROBS)
+
+    # Origination must be recent enough that the loan is still active (not yet
+    # matured) as of the reporting date — a "current" loan book shouldn't
+    # contain loans that already finished. Bounded per-loan by that loan's own
+    # term, capped at a 10-year lookback, with a 45-day buffer to stay clear
+    # of maturity even after Phase 3's calendar-accurate schedule replaces
+    # this file's 30-days/month approximation.
+    days_back_max = np.clip(term_months.astype(int) * 30 - 45, 30, 3650)
+    origination_date = pd.Series(pd.to_datetime([
+        fake.date_between(
+            start_date=(reporting_date - pd.Timedelta(days=int(days_back_max[i]))).date(),
+            end_date=reporting_date.date(),
+        )
+        for i in range(n)
+    ]))
     # 30 days/month approximation here; Phase 3's real schedule uses calendar months.
     maturity_date = origination_date + pd.to_timedelta(term_months.astype(int) * 30, unit="D")
 
