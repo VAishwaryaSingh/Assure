@@ -124,3 +124,74 @@ no loans at £0), and 0 loans are already matured as of the reporting date.
 Phase 4's lifetime ECL calculation needs each loan's full remaining monthly schedule
 (plan.md Section 6: "summed over remaining amortisation schedule"), not just the
 single current-balance figure.
+
+---
+
+## Phase 4 — IFRS 9 staging & ECL (`model/staging.py`, `model/ecl.py`)
+
+**Staging rule.** Uses IFRS 9's own days-past-due backstop — a "rebuttable
+presumption" the standard explicitly permits as a proxy for "significant increase in
+credit risk" when a more granular internal model isn't available:
+- Stage 1: `< 30` days past due → 12-month ECL
+- Stage 2: `30-89` days past due → lifetime ECL
+- Stage 3: `90+` days past due (default) → lifetime ECL, treated as a near-certain loss
+
+**Disclosed limitation:** plan.md also lists "a risk-grade downgrade of 2+ notches
+since origination" as an alternative Stage 2 trigger. That's not implemented — Phase
+2's synthetic dataset only models a single, static risk grade per loan (as at
+origination), not a grade *history* that could show migration over time. Modelling
+grade drift honestly would need its own dedicated random process, which felt like
+scope creep for this MVP. Noted here explicitly rather than silently dropped.
+
+**PD (probability of default), 12-month, by risk grade** — a fixed lookup table,
+loosely shaped like the *order of magnitude* of published rating-agency average
+annual default rates (investment-grade under 1%, sub-investment-grade rising steeply
+to 40% for the weakest grade). Not calibrated to any specific real study — the point,
+per plan.md Section 5, is that it's defensible and disclosed, not realistic to a
+specific bank's book.
+
+**LGD (loss given default), by collateral type** — residential 20%, commercial 35%,
+other 50%, unsecured 65%. Secured lending is assumed to recover more of its exposure
+in a default (via collateral sale), so a lower share is ultimately lost. Illustrative,
+same disclosure basis as PD.
+
+**EAD (exposure at default).** For Stage 1 and Stage 3: the loan's current balance as
+at the reporting date. For Stage 2's lifetime calculation: the *opening balance* of
+each future monthly period — i.e. the exposure actually outstanding during the month
+a default could occur in, taken from the real amortisation schedule (Phase 3), not a
+static figure.
+
+**12-month ECL (Stage 1):** `PD_12m x LGD x EAD`, applied once using the loan's
+current balance — the direct formula from plan.md Section 6. *Known simplification:*
+this isn't capped to a loan's remaining term, so a loan with only 2-3 months left
+before maturity is given the full 12-month PD rather than a shorter, remaining-life
+one — a minor, technically-correct-under-a-stricter-reading nuance, not corrected here
+to keep the model matching the plan's stated formula exactly.
+
+**Lifetime ECL (Stage 2):** walks every remaining monthly period from the
+amortisation schedule and sums `PD_t x LGD x EAD_t`. `PD_t` is the *marginal* (this
+specific month, unconditional) default probability, derived by converting the grade's
+annual PD into a constant monthly hazard rate (`h = 1 − (1 − PD_annual)^(1/12)`) and
+applying survival analysis: `PD_t = (1 − h)^(t−1) x h`. This treats the annual PD as
+constant across the loan's remaining life — a standard, legible simplification (real
+models often let PD vary by vintage or economic cycle; see Phase 5 for how this
+project layers macro scenarios on top of the same PD table instead).
+
+**Stage 3 ECL.** Deliberately *not* a forward PD projection — a defaulted loan's loss
+event has already happened, so ECL is calculated directly as `LGD x EAD` (effectively
+PD = 100%), consistent with "specific provisioning" in plan.md Section 5.
+
+**Result (base case, no scenario overlay yet — see Phase 5), reporting date
+31 Dec 2025:**
+
+| Stage | Loans | Exposure | ECL | Coverage |
+|---|---|---|---|---|
+| 1 — performing | 1,431 | £62.89m | £1.22m | 1.94% |
+| 2 — watch | 40 | £1.11m | £0.11m | 10.25% |
+| 3 — default | 29 | £1.65m | £0.71m | 42.91% |
+| **Total** | **1,500** | **£65.65m** | **£2.04m** | **3.11%** |
+
+Saved to `data/ecl_results.parquet` (the Phase 2 portfolio fields, plus `ifrs9_stage`
+and `ecl` per loan) — another output file not in the original plan.md layout, added
+for the same reason as `amortisation_schedules.parquet`: it's the concrete,
+inspectable result this phase actually produces.
