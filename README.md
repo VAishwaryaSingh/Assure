@@ -6,9 +6,7 @@ the way an auditor would.
 
 **Live dashboard: [assurebcm.streamlit.app](https://assurebcm.streamlit.app/)**
 
-**Screenshot:** *(add a screenshot of the dashboard here — I don't have browser
-access in this environment to capture one myself; a screenshot of the Portfolio
-Overview tab works well)*
+![Assure dashboard — Portfolio Overview tab](docs/dashboard_screenshot.png)
 
 ---
 
