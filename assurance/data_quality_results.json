@@ -1,0 +1,74 @@
+[
+  {
+    "check": "duplicate_loan_ids",
+    "description": "Every loan_id should be unique \u2014 a duplicate would double-count exposure.",
+    "records_checked": 1500,
+    "violations_found": 0,
+    "status": "PASS",
+    "sample_violation_ids": []
+  },
+  {
+    "check": "unexpected_nulls",
+    "description": "No nulls expected in any field except ltv (which is null by design for unsecured/other collateral).",
+    "records_checked": 1500,
+    "violations_found": 0,
+    "status": "PASS",
+    "sample_violation_ids": []
+  },
+  {
+    "check": "ltv_null_pattern",
+    "description": "ltv should be populated only for residential/commercial collateral, and null otherwise.",
+    "records_checked": 1500,
+    "violations_found": 0,
+    "status": "PASS",
+    "sample_violation_ids": []
+  },
+  {
+    "check": "out_of_range_values",
+    "description": "principal>0, 0<=current_balance<=principal, 0<=interest_rate<=50%, term_months>0, arrears_days>=0, 0<=ltv<=100%, maturity_date>origination_date.",
+    "records_checked": 1500,
+    "violations_found": 0,
+    "status": "PASS",
+    "sample_violation_ids": []
+  },
+  {
+    "check": "categorical_validity",
+    "description": "borrower_risk_grade/collateral_type/amortisation_type/status must be one of their defined allowed values.",
+    "records_checked": 1500,
+    "violations_found": 0,
+    "status": "PASS",
+    "sample_violation_ids": []
+  },
+  {
+    "check": "no_matured_loans_in_book",
+    "description": "Every loan in a 'current' portfolio snapshot should still be active (maturity_date > reporting_date) \u2014 this check caught a real Phase 2 bug, see docs/methodology.md.",
+    "records_checked": 1500,
+    "violations_found": 0,
+    "status": "PASS",
+    "sample_violation_ids": []
+  },
+  {
+    "check": "orphan_schedule_rows",
+    "description": "Every loan_id in amortisation_schedules.parquet should exist in loan_portfolio.parquet.",
+    "records_checked": 1500,
+    "violations_found": 0,
+    "status": "PASS",
+    "sample_violation_ids": []
+  },
+  {
+    "check": "portfolio_loans_missing_schedule",
+    "description": "Every loan in loan_portfolio.parquet should have at least one row in amortisation_schedules.parquet.",
+    "records_checked": 1500,
+    "violations_found": 0,
+    "status": "PASS",
+    "sample_violation_ids": []
+  },
+  {
+    "check": "ecl_results_loan_id_match",
+    "description": "loan_portfolio.parquet and ecl_results.parquet should contain exactly the same set of loan_ids.",
+    "records_checked": 1500,
+    "violations_found": 0,
+    "status": "PASS",
+    "sample_violation_ids": []
+  }
+]

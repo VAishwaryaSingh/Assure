@@ -1,0 +1,62 @@
+[
+  {
+    "factor": "PD",
+    "shock_%": -20.0,
+    "total_ecl": 1780051.55,
+    "change_vs_base_%": -12.81
+  },
+  {
+    "factor": "PD",
+    "shock_%": -10.0,
+    "total_ecl": 1911045.12,
+    "change_vs_base_%": -6.4
+  },
+  {
+    "factor": "PD",
+    "shock_%": 0.0,
+    "total_ecl": 2041659.41,
+    "change_vs_base_%": 0.0
+  },
+  {
+    "factor": "PD",
+    "shock_%": 10.0,
+    "total_ecl": 2171936.72,
+    "change_vs_base_%": 6.38
+  },
+  {
+    "factor": "PD",
+    "shock_%": 20.0,
+    "total_ecl": 2301912.44,
+    "change_vs_base_%": 12.75
+  },
+  {
+    "factor": "LGD",
+    "shock_%": -20.0,
+    "total_ecl": 1633327.53,
+    "change_vs_base_%": -20.0
+  },
+  {
+    "factor": "LGD",
+    "shock_%": -10.0,
+    "total_ecl": 1837493.47,
+    "change_vs_base_%": -10.0
+  },
+  {
+    "factor": "LGD",
+    "shock_%": 0.0,
+    "total_ecl": 2041659.41,
+    "change_vs_base_%": 0.0
+  },
+  {
+    "factor": "LGD",
+    "shock_%": 10.0,
+    "total_ecl": 2245825.35,
+    "change_vs_base_%": 10.0
+  },
+  {
+    "factor": "LGD",
+    "shock_%": 20.0,
+    "total_ecl": 2449991.29,
+    "change_vs_base_%": 20.0
+  }
+]

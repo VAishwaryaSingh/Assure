@@ -1,0 +1,24 @@
+[
+  {
+    "check": "loan_level_sum_ties_to_portfolio_total",
+    "loan_level_sum": 2041659.41,
+    "portfolio_total": 2041659.41,
+    "difference": 0.0,
+    "status": "PASS"
+  },
+  {
+    "check": "ecl_roll_forward",
+    "opening_date": "2025-09-30",
+    "closing_date": "2025-12-31",
+    "loans_existing_at_opening": 1379,
+    "loans_newly_originated_in_period": 121,
+    "opening_ecl": 1939299.16,
+    "new_originations": 277821.75,
+    "remeasurement": -175461.5,
+    "derecognitions": 0.0,
+    "roll_forward_closing_ecl": 2041659.41,
+    "actual_closing_ecl": 2041659.41,
+    "difference": 0.0,
+    "status": "PASS"
+  }
+]

@@ -240,3 +240,77 @@ than presenting the scaling as perfectly linear.
 Saved to `data/ecl_scenarios.parquet` — all three scenarios' full per-loan results in
 one file (a `scenario` column distinguishes them), for the dashboard's side-by-side
 scenario view in Phase 7.
+
+---
+
+## Phase 6 — Data assurance layer
+
+The full write-up of this phase's findings is `assurance/model_validation_memo.md`
+(styled as a real model risk review). This section documents the mechanics of the
+three scripts behind it.
+
+**`data_quality_checks.py`** — 9 independent checks: duplicate `loan_id`s, unexpected
+nulls, the `ltv` null pattern (should be populated only for residential/commercial
+collateral), out-of-range values (negative balances, LTV over 100%, interest rate
+over 50%, etc.), categorical validity, no matured loans in the book (a direct re-test
+of the Phase 3 bug), and referential integrity between `loan_portfolio.parquet` and
+its two derived files (`amortisation_schedules.parquet`, `ecl_results.parquet`).
+**Result: 9/9 passed.** Output: `assurance/data_quality_results.json`.
+
+**`recalculation_test.py`** — 25 loans sampled (fixed seed `123`, deliberately
+different from the data generator's seed `42`). Both balance and ECL were
+recalculated **from scratch, written independently in this script** rather than by
+importing `model/amortisation.py` / `model/ecl.py` — the point of a recalculation
+test is to catch a place where the production code diverges from the documented
+methodology, which calling the same code again cannot do. **Result: 25/25 balance
+matches, 25/25 ECL matches, within a £0.01 tolerance.** Output:
+`assurance/recalculation_test_results.csv`.
+
+**`reconciliation.py`** — two checks:
+1. Loan-level `ecl` sum vs. the portfolio-level total → ties exactly (£0.00 diff).
+   Exists to guarantee this stays true once Phase 7's dashboard aggregates it a
+   second, independent way.
+2. An opening-to-closing ECL roll-forward, 30 Sep 2025 → 31 Dec 2025 (a 3-month
+   window immediately before the main reporting date). **Disclosed simplification:**
+   the synthetic dataset only has one point-in-time arrears/status snapshot, so there
+   is no genuine second data point to show real stage migration between two dates.
+   The opening position instead holds each existing loan's stage and risk grade
+   constant and rolls its *balance* back to the opening date using the real
+   amortisation schedule — which isolates two real, testable effects (new
+   originations, and balance runoff on existing loans) without inventing
+   stage-transition data the project doesn't have. No loan matured within this
+   3-month window (consistent with the Phase 3 fix — every loan is confirmed active
+   well beyond the closing date), so the roll-forward has no derecognitions to model
+   in this particular window.
+
+   | | Loans | ECL |
+   |---|---|---|
+   | Opening (30 Sep 2025) | 1,379 | £1.94m |
+   | + New originations | 121 | +£0.28m |
+   | + Remeasurement (existing loans, balance runoff) | — | −£0.18m |
+   | − Derecognitions | 0 | £0.00 |
+   | **= Closing (31 Dec 2025)** | **1,500** | **£2.04m** |
+
+   **Result: reconciles exactly (£0.00 diff).** Output:
+   `assurance/reconciliation_results.json`.
+
+**`sensitivity_analysis.py`** — not in the original plan.md file layout, added
+because the Model Validation Memo (Section 7, point 6) calls for sensitivity results;
+reuses the exact `pd_table`/`lgd_table` swapping mechanism built for Phase 5 rather
+than duplicating logic. Flexes PD and LGD independently by ±10%/±20% (holding the
+other factor at base case):
+
+| Shock | PD → total ECL | change | LGD → total ECL | change |
+|---|---|---|---|---|
+| −20% | £1.78m | −12.81% | £1.63m | −20.00% |
+| −10% | £1.91m | −6.40% | £1.84m | −10.00% |
+| base | £2.04m | 0% | £2.04m | 0% |
+| +10% | £2.17m | +6.38% | £2.25m | +10.00% |
+| +20% | £2.30m | +12.75% | £2.45m | +20.00% |
+
+LGD sensitivity is exactly linear, as expected (ECL is directly proportional to LGD
+in every formula used). PD sensitivity is sub-linear — a ±10% PD shock moves total
+ECL by only ~±6.4%, not ±10% — for the same reason the Phase 5 scenario uplift wasn't
+a clean multiple: Stage 3's loss (`LGD x EAD`) has no PD term at all, so roughly a
+third of total ECL doesn't respond to a PD shock, diluting the portfolio-wide effect.
+Output: `assurance/sensitivity_results.json`.

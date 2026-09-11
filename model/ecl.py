@@ -37,9 +37,13 @@ def _monthly_hazard(annual_pd: float) -> float:
     return 1 - (1 - annual_pd) ** (1 / 12)
 
 
-def ecl_12_month(portfolio: pd.DataFrame, pd_table: dict = PD_12M_BY_GRADE) -> pd.Series:
+def ecl_12_month(
+    portfolio: pd.DataFrame,
+    pd_table: dict = PD_12M_BY_GRADE,
+    lgd_table: dict = LGD_BY_COLLATERAL,
+) -> pd.Series:
     pd_12m = portfolio["borrower_risk_grade"].map(pd_table)
-    lgd = portfolio["collateral_type"].map(LGD_BY_COLLATERAL)
+    lgd = portfolio["collateral_type"].map(lgd_table)
     ead = portfolio["current_balance"]
     return pd_12m * lgd * ead
 
@@ -49,6 +53,7 @@ def ecl_lifetime(
     schedules: pd.DataFrame,
     as_of_date,
     pd_table: dict = PD_12M_BY_GRADE,
+    lgd_table: dict = LGD_BY_COLLATERAL,
 ) -> pd.Series:
     """Sum of PD_t x LGD x EAD_t over every remaining monthly period."""
     as_of_date = pd.Timestamp(as_of_date)
@@ -63,7 +68,7 @@ def ecl_lifetime(
     months_ahead = future.groupby("loan_id").cumcount()  # 0 = the next period after as_of_date
     survival_prob = (1 - monthly_hazard) ** months_ahead
     marginal_pd = survival_prob * monthly_hazard  # unconditional P(default in exactly this month)
-    lgd = future["collateral_type"].map(LGD_BY_COLLATERAL)
+    lgd = future["collateral_type"].map(lgd_table)
 
     # EAD_t = the balance outstanding going into that period (opening_balance),
     # i.e. the exposure actually at risk during that month.
@@ -72,8 +77,8 @@ def ecl_lifetime(
     return portfolio["loan_id"].map(lifetime).fillna(0.0)
 
 
-def ecl_stage3(portfolio: pd.DataFrame) -> pd.Series:
-    lgd = portfolio["collateral_type"].map(LGD_BY_COLLATERAL)
+def ecl_stage3(portfolio: pd.DataFrame, lgd_table: dict = LGD_BY_COLLATERAL) -> pd.Series:
+    lgd = portfolio["collateral_type"].map(lgd_table)
     ead = portfolio["current_balance"]
     return lgd * ead
 
@@ -83,19 +88,21 @@ def calculate_ecl(
     schedules: pd.DataFrame,
     as_of_date,
     pd_table: dict = PD_12M_BY_GRADE,
+    lgd_table: dict = LGD_BY_COLLATERAL,
 ) -> pd.DataFrame:
     """Adds ifrs9_stage and ecl columns, routing each loan to the right formula by stage.
 
-    `pd_table` defaults to the base-case PD_12M_BY_GRADE but can be swapped
-    for a scaled table — see model/scenarios.py — to flex the same
-    calculation under different macro scenarios. Stage assignment always
-    uses arrears_days (a fact about the loan), never the PD table, so which
-    stage a loan sits in doesn't change across scenarios — only its ECL does.
+    `pd_table`/`lgd_table` default to the base-case tables but can be swapped
+    for scaled versions — see model/scenarios.py and
+    assurance/sensitivity_analysis.py — to flex the same calculation under
+    different macro scenarios or sensitivity shocks. Stage assignment always
+    uses arrears_days (a fact about the loan), never these tables, so which
+    stage a loan sits in doesn't change — only its ECL does.
     """
     df = stage_portfolio(portfolio)
-    ecl_12m = ecl_12_month(df, pd_table)
-    ecl_life = ecl_lifetime(df, schedules, as_of_date, pd_table)
-    ecl_s3 = ecl_stage3(df)
+    ecl_12m = ecl_12_month(df, pd_table, lgd_table)
+    ecl_life = ecl_lifetime(df, schedules, as_of_date, pd_table, lgd_table)
+    ecl_s3 = ecl_stage3(df, lgd_table)
 
     df["ecl"] = np.select(
         [df["ifrs9_stage"] == 1, df["ifrs9_stage"] == 2, df["ifrs9_stage"] == 3],
