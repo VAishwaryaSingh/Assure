@@ -1,0 +1,26 @@
+loan_id,origination_date,maturity_date,term_months,principal,interest_rate,amortisation_type,borrower_risk_grade,industry_sector,region,collateral_type,ltv,arrears_days,status,current_balance
+L000001,2022-05-24,2042-02-08,240,104400.0,0.0731,reducing_balance,B,Hospitality,East of England,other,,11,performing,94946.19
+L000002,2021-04-24,2026-03-29,60,17100.0,0.1307,reducing_balance,C,Consumer/Retail,Wales,residential,0.5724,32,watch,1517.23
+L000003,2018-10-02,2038-06-19,240,2300.0,0.0625,reducing_balance,BB,Consumer/Retail,Midlands,residential,0.5059,15,performing,1777.45
+L000004,2018-03-27,2033-01-07,180,6200.0,0.0587,bullet,BB,Manufacturing,Yorkshire and the Humber,residential,0.95,8,performing,6200.0
+L000005,2025-10-08,2026-10-03,12,150500.0,0.0905,reducing_balance,CCC,Consumer/Retail,Scotland,commercial,0.81,23,performing,126349.44
+L000006,2022-10-07,2052-05-02,360,24300.0,0.0558,reducing_balance,BB,Financial Services,London,unsecured,,12,performing,23213.78
+L000007,2024-12-02,2039-09-15,180,17100.0,0.0851,reducing_balance,CCC,Consumer/Retail,Northern Ireland,commercial,0.5912,14,performing,16510.69
+L000008,2016-11-15,2036-08-02,240,187700.0,0.061,reducing_balance,BB,Agriculture,East of England,commercial,0.6034,11,performing,129424.88
+L000009,2024-12-05,2026-11-25,24,128700.0,0.0435,reducing_balance,BBB,Technology,Scotland,commercial,0.8814,12,performing,65746.86
+L000010,2021-05-03,2026-04-07,60,37200.0,0.0879,reducing_balance,CCC,Manufacturing,North West,unsecured,,24,performing,3759.12
+L000011,2022-03-30,2027-03-04,60,27100.0,0.0389,reducing_balance,A,Consumer/Retail,North East,unsecured,,8,performing,7276.04
+L000012,2021-01-20,2045-09-11,300,31800.0,0.0503,reducing_balance,BBB,Energy,East of England,residential,0.95,8,performing,28250.01
+L000013,2016-07-10,2026-05-19,120,45600.0,0.0688,reducing_balance,B,Real Estate,Wales,commercial,0.6775,20,performing,3603.36
+L000014,2017-12-28,2037-09-14,240,179900.0,0.0893,reducing_balance,CCC,Healthcare,South East,other,,15,performing,142009.37
+L000015,2024-04-25,2029-03-30,60,55400.0,0.1051,reducing_balance,CC,Manufacturing,Wales,residential,0.813,26,performing,40044.87
+L000016,2024-09-16,2027-09-01,36,75100.0,0.0542,reducing_balance,BBB,Hospitality,South West,unsecured,,8,performing,45281.54
+L000017,2018-05-30,2028-04-07,120,116900.0,0.042,reducing_balance,A,Financial Services,Wales,unsecured,,8,performing,32891.33
+L000018,2025-08-23,2026-08-18,12,11300.0,0.1227,reducing_balance,C,Agriculture,London,residential,0.5864,27,performing,7685.53
+L000019,2024-02-04,2043-10-22,240,77300.0,0.0413,bullet,A,Real Estate,London,unsecured,,6,performing,77300.0
+L000020,2016-04-30,2026-03-09,120,27000.0,0.046,reducing_balance,BBB,Financial Services,South East,residential,0.692,10,performing,1113.81
+L000021,2024-01-22,2038-11-04,180,2900.0,0.0512,reducing_balance,BBB,Consumer/Retail,North East,commercial,0.8647,10,performing,2641.0
+L000022,2025-02-21,2028-02-06,36,4300.0,0.0618,reducing_balance,BB,Construction,South West,residential,0.5528,11,performing,3184.18
+L000023,2019-05-28,2048-12-21,360,13100.0,0.1124,reducing_balance,CC,Healthcare,North East,residential,0.5408,26,performing,12584.83
+L000024,2017-07-23,2042-03-14,300,61800.0,0.0861,reducing_balance,CCC,Real Estate,Wales,unsecured,,21,performing,53122.9
+L000025,2025-07-27,2045-04-13,240,40700.0,0.0712,reducing_balance,B,Energy,London,unsecured,,17,performing,40310.41

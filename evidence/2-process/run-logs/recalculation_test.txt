@@ -1,0 +1,12 @@
+# Captured 2026-09-18 from the repo root. Synthetic data only.
+# Command:  python assurance/recalculation_test.py
+# Effect:   rewrites assurance/recalculation_test_results.csv. On re-run the committed file was byte-identical (git status clean).
+# Env:      pandas 3.0.6, pyarrow 25.0.1, fresh virtual environment.
+
+Recalculation test: 25 loans sampled (seed=123)
+Balance recompute matches model: 25/25
+ECL recompute matches model:     25/25
+
+No discrepancies found — every sampled loan's independently recomputed balance and ECL matches the model's output within £0.01.
+
+Full results -> assurance/recalculation_test_results.csv

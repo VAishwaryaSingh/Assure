@@ -1,0 +1,18 @@
+# Captured 2026-09-18 from the repo root. Synthetic data only.
+# Command:  python assurance/data_quality_checks.py
+# Effect:   rewrites assurance/data_quality_results.json. On re-run the committed file was byte-identical (git status clean).
+# Env:      pandas 3.0.6, pyarrow 25.0.1, fresh virtual environment.
+
+Data quality checks: 9/9 passed
+
+[PASS] duplicate_loan_ids — 0 violation(s) of 1500 checked
+[PASS] unexpected_nulls — 0 violation(s) of 1500 checked
+[PASS] ltv_null_pattern — 0 violation(s) of 1500 checked
+[PASS] out_of_range_values — 0 violation(s) of 1500 checked
+[PASS] categorical_validity — 0 violation(s) of 1500 checked
+[PASS] no_matured_loans_in_book — 0 violation(s) of 1500 checked
+[PASS] orphan_schedule_rows — 0 violation(s) of 1500 checked
+[PASS] portfolio_loans_missing_schedule — 0 violation(s) of 1500 checked
+[PASS] ecl_results_loan_id_match — 0 violation(s) of 1500 checked
+
+Full results -> assurance/data_quality_results.json

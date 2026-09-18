@@ -1,0 +1,22 @@
+# Captured 2026-09-18 from the repo root. Synthetic data only.
+# Command:  python assurance/sensitivity_analysis.py
+# Effect:   rewrites assurance/sensitivity_results.json. On re-run the committed file was byte-identical (git status clean).
+# Env:      pandas 3.0.6, pyarrow 25.0.1, fresh virtual environment.
+
+PD sensitivity (LGD held at base case):
+factor  shock_%  total_ecl  change_vs_base_%
+    PD    -20.0 1780051.55            -12.81
+    PD    -10.0 1911045.12             -6.40
+    PD      0.0 2041659.41              0.00
+    PD     10.0 2171936.72              6.38
+    PD     20.0 2301912.44             12.75
+
+LGD sensitivity (PD held at base case):
+factor  shock_%  total_ecl  change_vs_base_%
+   LGD    -20.0 1633327.53             -20.0
+   LGD    -10.0 1837493.47             -10.0
+   LGD      0.0 2041659.41               0.0
+   LGD     10.0 2245825.35              10.0
+   LGD     20.0 2449991.29              20.0
+
+Full results -> assurance/sensitivity_results.json

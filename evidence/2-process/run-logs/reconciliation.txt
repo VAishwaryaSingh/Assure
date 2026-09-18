@@ -1,0 +1,20 @@
+# Captured 2026-09-18 from the repo root. Synthetic data only.
+# Command:  python assurance/reconciliation.py
+# Effect:   rewrites assurance/reconciliation_results.json. On re-run the committed file was byte-identical (git status clean).
+# Env:      pandas 3.0.6, pyarrow 25.0.1, fresh virtual environment.
+
+[PASS] Loan-level sum vs. portfolio total
+  Loan-level sum:   2,041,659.41
+  Portfolio total:  2,041,659.41
+  Difference:       0.00
+
+[PASS] ECL roll-forward, 2025-09-30 -> 2025-12-31
+  Opening ECL (1379 loans):          1,939,299.16
+  + New originations (121 loans):     277,821.75
+  + Remeasurement (existing loans):        -175,461.50
+  - Derecognitions:                               0.00
+  = Roll-forward closing ECL:              2,041,659.41
+  Actual closing ECL (Phase 4 result):     2,041,659.41
+  Difference:                                      0.00
+
+Full results -> assurance/reconciliation_results.json

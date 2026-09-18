@@ -42,6 +42,9 @@ honestly, limitations included.
 Full methodology — every formula, assumption, and disclosed simplification — is in
 [`docs/methodology.md`](docs/methodology.md).
 
+The proof behind it — the data, the process, the bug that was found and fixed, and what the checks do and don't detect — is
+in [`evidence/`](evidence/).
+
 ## Headline result
 
 A £65.6m synthetic portfolio, base-case ECL of **£2.04m (3.11% coverage)**, rising to a
